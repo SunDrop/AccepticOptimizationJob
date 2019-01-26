@@ -32,7 +32,7 @@ class PublisherNotifier
 
     private function getTemplate(string $notificationType): string
     {
-        return '<!-- TODO: not implemented -->';
+        return $notificationType . ' <!-- TODO: not implemented -->';
     }
 
     private function send(Publisher $publisher, string $template): void
@@ -41,5 +41,6 @@ class PublisherNotifier
          * 1) Fill template
          * 2) Send email/viber/etc
          */
+        printf('Notification "%s" send to publisher (%d)', $template, $publisher->getId());
     }
 }

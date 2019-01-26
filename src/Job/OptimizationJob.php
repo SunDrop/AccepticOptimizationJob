@@ -23,7 +23,7 @@ class OptimizationJob
 
     public function run()
     {
-        $campaigns = (new CampaignDataSource())->getCampaignsAsKeyArray();
+        $campaigns = (new CampaignDataSource())->getCampaignsAsAssocArray();
         $campaignEventAggregator = new CampaignEventAggregator();
         foreach ((new EventsDataSource())->getEventsSince("2 weeks ago") as $event) {
             if (!$event->isValid()) {
@@ -45,4 +45,3 @@ class OptimizationJob
         (new CampaignAnalyser($campaigns, $campaignEventAggregator))->run();
     }
 }
-

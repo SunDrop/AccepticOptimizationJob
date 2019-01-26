@@ -19,6 +19,23 @@ class Event
     /** @var \DateTimeInterface */
     private $ts;
 
+    /**
+     * Event constructor (for test).
+     * @param int $id
+     * @param string $type
+     * @param int $campaignId
+     * @param int $publisherId
+     * @param \DateTimeInterface $ts
+     */
+    public function __construct(int $id, string $type, int $campaignId, int $publisherId, \DateTimeInterface $ts)
+    {
+        $this->id = $id;
+        $this->type = $type;
+        $this->campaignId = $campaignId;
+        $this->publisherId = $publisherId;
+        $this->ts = $ts;
+    }
+
     public function getId(): int
     {
         return $this->id;

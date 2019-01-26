@@ -77,5 +77,4 @@ class CampaignAnalyser
         $newUnblockedPublisherList = array_diff($campaign->getBlackList(), $blacklist);
         $publisherNotifier->notify(NotificationType::TYPE_UNBLOCKED, $newUnblockedPublisherList);
     }
-
 }

@@ -16,6 +16,6 @@ class EventsDataSource
      */
     public function getEventsSince(?string $string): ?\iterable
     {
-        return yield new Event();
+        return [];
     }
 }

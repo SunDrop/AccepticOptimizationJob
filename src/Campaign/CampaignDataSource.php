@@ -19,17 +19,18 @@ class CampaignDataSource
      * ]
      * @return iterable|null
      */
-    public function getCampaignsAsKeyArray(): ?\iterable
+    public function getCampaignsAsAssocArray(): ?iterable
     {
-        return \array_map(function (Campaign $campaign) {
-            return [$campaign->getId() => $campaign];
-        }, $this->getCampaigns());
+        return \array_reduce($this->getCampaigns(), function ($result, Campaign $campaign) {
+            $result[$campaign->getId()] = $campaign;
+            return $result;
+        }, []);
     }
 
     /**
      * @return Campaign[]|null
      */
-    public function getCampaigns(): ?\iterable
+    public function getCampaigns(): ?iterable
     {
         return [];
     }
