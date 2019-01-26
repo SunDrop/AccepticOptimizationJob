@@ -14,7 +14,7 @@ class EventsDataSource
      * @param string $string
      * @return Event[]|null
      */
-    public function getEventsSince(?string $string): ?\iterable
+    public function getEventsSince(?string $string): ?iterable
     {
         return [];
     }

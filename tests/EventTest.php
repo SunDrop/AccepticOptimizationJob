@@ -17,6 +17,7 @@ class EventTest extends \Codeception\Test\Unit
         foreach (['FalseType', '', 0, false] as $eventType) {
             yield [new Event(rand(), $eventType, rand(), rand(), new \DateTime())];
         }
+        yield [new Event(rand(), $eventType, rand(), rand(), new \DateTime('tomorrow'))];
     }
 
     /**

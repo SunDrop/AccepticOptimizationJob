@@ -16,12 +16,22 @@ class CampaignAnalyser
 
     /**
      * @param Campaign[] $campaigns
-     * @param CampaignEventAggregator $campaignEventAggregator
+     * @return CampaignAnalyser
      */
-    public function __construct(iterable $campaigns, CampaignEventAggregator $campaignEventAggregator)
+    public function setCampaigns(array $campaigns): CampaignAnalyser
     {
         $this->campaigns = $campaigns;
+        return $this;
+    }
+
+    /**
+     * @param CampaignEventAggregator $campaignEventAggregator
+     * @return CampaignAnalyser
+     */
+    public function setCampaignEventAggregator(CampaignEventAggregator $campaignEventAggregator): CampaignAnalyser
+    {
         $this->campaignEventAggregator = $campaignEventAggregator;
+        return $this;
     }
 
     public function run(): void
