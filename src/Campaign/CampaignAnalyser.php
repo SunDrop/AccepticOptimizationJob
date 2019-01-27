@@ -2,9 +2,9 @@
 
 namespace Acceptic\Campaign;
 
-use Acceptic\Log\SomeLogger;
 use Acceptic\Publisher\NotificationType;
 use Acceptic\Publisher\PublisherNotifier;
+use LogicException;
 
 class CampaignAnalyser
 {
@@ -14,11 +14,24 @@ class CampaignAnalyser
     /** @var CampaignEventAggregator */
     private $campaignEventAggregator;
 
+    /** @var PublisherNotifier */
+    private $publisherNotifier;
+
     /**
-     * @param Campaign[] $campaigns
+     * @param PublisherNotifier $publisherNotifier
      * @return CampaignAnalyser
      */
-    public function setCampaigns(array $campaigns): CampaignAnalyser
+    public function setPublisherNotifier(PublisherNotifier $publisherNotifier): CampaignAnalyser
+    {
+        $this->publisherNotifier = $publisherNotifier;
+        return $this;
+    }
+
+    /**
+     * @param iterable $campaigns
+     * @return CampaignAnalyser
+     */
+    public function setCampaigns(iterable $campaigns): CampaignAnalyser
     {
         $this->campaigns = $campaigns;
         return $this;
@@ -34,28 +47,56 @@ class CampaignAnalyser
         return $this;
     }
 
+    /**
+     * @throws LogicException
+     */
     public function run(): void
     {
-        foreach ($this->campaignEventAggregator->getStore() as $campaignId => $campaignAggregator) {
-            $blacklist = [];
-            $campaign = $this->campaigns[$campaignId];
-            $optimizationProps = $campaign->getOptimizationProps();
-            foreach ($campaignAggregator as $publisherId => $publisherEvents) {
-                if ($this->isThresholdDone($optimizationProps, $publisherEvents)
-                    && !$this->isRatioDone($optimizationProps, $publisherEvents)) {
-                    $blacklist[] = $publisherId;
+        if ($this->isInitialized()) {
+            foreach ($this->campaignEventAggregator->getStore() as $campaignId => $campaignAggregatedData) {
+                $blacklist = [];
+                $whitelist = [];
+                $campaign = $this->campaigns[$campaignId];
+                $optimizationProps = $campaign->getOptimizationProps();
+                foreach ($campaignAggregatedData as $publisherId => $publisherEvents) {
+                    if ($this->isThresholdDone($optimizationProps, $publisherEvents)
+                        && !$this->isRatioDone($optimizationProps, $publisherEvents)) {
+                        $blacklist[] = $publisherId;
+                    } else {
+                        $whitelist[] = $publisherId;
+                    }
                 }
+                $this->notifyPublishers($campaign, $blacklist, $whitelist);
+                $campaign->saveBlacklist($this->makeBlacklist($campaign, $blacklist, $whitelist));
             }
-            $this->notifyPublishers($campaign, $blacklist);
-            $campaign->saveBlacklist($blacklist);
         }
+    }
+
+    /**
+     * @throws LogicException
+     * @return bool
+     */
+    private function isInitialized(): bool
+    {
+        if (!$this->campaigns) {
+            throw new LogicException('campaigns is not initialized');
+        }
+        if (!$this->campaignEventAggregator) {
+            throw new LogicException('campaignEventAggregator is not initialized');
+        }
+        if (!$this->publisherNotifier) {
+            throw new LogicException('publisherNotifier is not initialized');
+        }
+
+        return true;
     }
 
     private function isThresholdDone(OptimizationProps $optimizationProps, array $publisherEvents): bool
     {
         $sourceEvent = $optimizationProps->sourceEvent;
         $threshold = $optimizationProps->threshold;
-        if ($publisherEvents[$sourceEvent] > $threshold) {
+        $sourceEventSum = $publisherEvents[$sourceEvent] ?? 0;
+        if ($sourceEventSum > $threshold) {
             return true;
         }
 
@@ -67,24 +108,31 @@ class CampaignAnalyser
         $sourceEvent = $optimizationProps->sourceEvent;
         $measuredEvent = $optimizationProps->measuredEvent;
         $ratioThreshold = $optimizationProps->ratioThreshold;
-        if (!$publisherEvents[$sourceEvent]) {
+        $sourceEventSum = $publisherEvents[$sourceEvent] ?? 0;
+        $measuredEventSum = $publisherEvents[$measuredEvent] ?? 0;
+        if (!$sourceEventSum) {
             return false;
         }
-        if ($publisherEvents[$measuredEvent] / $publisherEvents[$sourceEvent] < $ratioThreshold) {
+        if ($measuredEventSum / $sourceEventSum < $ratioThreshold) {
             return false;
         }
 
         return true;
     }
 
-    private function notifyPublishers(Campaign $campaign, array $blacklist): void
+    private function makeBlacklist(Campaign $campaign, array $blacklist, array $whitelist): array
     {
-        $publisherNotifier = new PublisherNotifier(new SomeLogger());
+        $newBlacklist = array_unique(array_merge(array_diff($campaign->getBlackList(), $whitelist), $blacklist));
+        sort($newBlacklist);
+        return $newBlacklist;
+    }
 
+    private function notifyPublishers(Campaign $campaign, array $blacklist, array $whitelist): void
+    {
         $newBlockedPublisherList = array_diff($blacklist, $campaign->getBlackList());
-        $publisherNotifier->notify(NotificationType::TYPE_BLOCKED, $newBlockedPublisherList);
+        $this->publisherNotifier->notify(NotificationType::TYPE_BLOCKED, ...$newBlockedPublisherList);
 
-        $newUnblockedPublisherList = array_diff($campaign->getBlackList(), $blacklist);
-        $publisherNotifier->notify(NotificationType::TYPE_UNBLOCKED, $newUnblockedPublisherList);
+        $newUnblockedPublisherList = array_intersect($campaign->getBlackList(), $whitelist);
+        $this->publisherNotifier->notify(NotificationType::TYPE_UNBLOCKED, ...$newUnblockedPublisherList);
     }
 }

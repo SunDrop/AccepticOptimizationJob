@@ -38,6 +38,7 @@ class PublisherNotifier
     private function send(Publisher $publisher, string $template): void
     {
         /**
+         * Stub (!)
          * 1) Fill template
          * 2) Send email/viber/etc
          */

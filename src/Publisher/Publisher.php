@@ -25,7 +25,9 @@ class Publisher
      */
     public static function getById($id)
     {
-        return new self();
+        $publisher = new self();
+        $publisher->id = $id;
+        return $publisher;
     }
 
     /**
