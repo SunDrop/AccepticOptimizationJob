@@ -39,8 +39,7 @@ class OptimizationJob
         CampaignEventAggregator $campaignEventAggregator,
         CampaignAnalyser $campaignAnalyser,
         LoggerInterface $logger
-    )
-    {
+    ) {
         $this->campaignDataSource = $campaignDataSource;
         $this->eventsDataSource = $eventsDataSource;
         $this->campaignEventAggregator = $campaignEventAggregator;
@@ -54,7 +53,7 @@ class OptimizationJob
         foreach ($this->eventsDataSource->getEventsSince("2 weeks ago") as $event) {
             if (!$event->isValid()) {
                 $this->logger->error('VK20180125_01: Not valid event ({eventId})', [
-                    'eventId' => $event->getId()
+                    'eventId' => $event->getId(),
                 ]);
                 continue;
             }

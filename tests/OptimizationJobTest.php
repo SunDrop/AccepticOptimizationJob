@@ -29,6 +29,18 @@ class OptimizationJobTest extends \Codeception\Test\Unit
     /** @var LoggerInterface */
     private $logger;
 
+    public function testRun()
+    {
+        $optimizationJob = new OptimizationJob(
+            $this->campaignDataSource,
+            $this->eventsDataSource,
+            $this->campaignEventAggregator,
+            $this->campaignAnalyser,
+            $this->logger
+        );
+        $optimizationJob->run();
+    }
+
     protected function _before()
     {
         $this->campaignDataSource = $this->getCampaignDataSourceMock();
@@ -93,17 +105,5 @@ class OptimizationJobTest extends \Codeception\Test\Unit
         $mock->expects($this->once())->method('critical');
 
         return $mock;
-    }
-
-    public function testRun()
-    {
-        $optimizationJob = new OptimizationJob(
-            $this->campaignDataSource,
-            $this->eventsDataSource,
-            $this->campaignEventAggregator,
-            $this->campaignAnalyser,
-            $this->logger
-        );
-        $optimizationJob->run();
     }
 }
