@@ -30,6 +30,11 @@ class CampaignEventAggregator
         $this->sumEvent($event->getCampaignId(), $event->getPublisherId(), $event->getType());
     }
 
+    public function getSumByType(int $campaignId, int $publisherId, string $eventType): int
+    {
+        return $this->store[$campaignId][$publisherId][$eventType] ?? 0;
+    }
+
     private function sumEvent(int $campaignId, int $publisherId, string $eventType): void
     {
         if (!isset($this->store[$campaignId][$publisherId][$eventType])) {

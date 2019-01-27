@@ -6,29 +6,50 @@ use Acceptic\Event\EventType;
 
 class CampaignEventAggregatorTest extends \Codeception\Test\Unit
 {
-    private function getExpectedAggregatedStore()
+    /** @var CampaignEventAggregator */
+    private $campaignEventAggregator;
+
+    public function testAddEvent()
     {
-        return [
-            // campaignId => 1
-            1 => [
-                // publisherId => 1
-                1 => [
-                    EventType::EVENT_TYPE_INSTALL => 5,
-                    EventType::EVENT_TYPE_REGISTRATION => 5,
-                ],
-                // publisherId => 2
-                2 => [
-                    EventType::EVENT_TYPE_APP_OPEN => 5,
-                ]
-            ],
-            // campaignId => 2
-            2 => [
-                // publisherId => 2
-                2 => [
-                    EventType::EVENT_TYPE_REGISTRATION => 5,
-                ],
-            ]
-        ];
+        $this->prepareEventStore();
+        $this->assertEquals($this->getExpectedAggregatedStore(), $this->campaignEventAggregator->getStore());
+    }
+
+    public function testGetSumByType()
+    {
+        $this->prepareEventStore();
+
+        $sumInstall = $this->campaignEventAggregator->getSumByType(
+            1, 1, EventType::EVENT_TYPE_INSTALL
+        );
+        $this->assertEquals(5, $sumInstall);
+
+        $sumOpen = $this->campaignEventAggregator->getSumByType(
+            2, 2, EventType::EVENT_TYPE_APP_OPEN
+        );
+        $this->assertEquals(0, $sumOpen);
+
+        $publisherNotExist = $this->campaignEventAggregator->getSumByType(
+            2, 3, EventType::EVENT_TYPE_APP_OPEN
+        );
+        $this->assertEquals(0, $publisherNotExist);
+
+        $campaignNotExist = $this->campaignEventAggregator->getSumByType(
+            3, 3, EventType::EVENT_TYPE_APP_OPEN
+        );
+        $this->assertEquals(0, $campaignNotExist);
+    }
+
+    protected function _before()
+    {
+        $this->campaignEventAggregator = new CampaignEventAggregator();
+    }
+
+    private function prepareEventStore()
+    {
+        foreach ($this->getEventsList() as $event) {
+            $this->campaignEventAggregator->add($event);
+        }
     }
 
     private function getEventsList()
@@ -47,12 +68,28 @@ class CampaignEventAggregatorTest extends \Codeception\Test\Unit
         }
     }
 
-    public function testAddEvent()
+    private function getExpectedAggregatedStore()
     {
-        $campaignEventAggregator = new CampaignEventAggregator();
-        foreach ($this->getEventsList() as $event) {
-            $campaignEventAggregator->add($event);
-        }
-        $this->assertEquals($this->getExpectedAggregatedStore(), $campaignEventAggregator->getStore());
+        return [
+            // campaignId => 1
+            1 => [
+                // publisherId => 1
+                1 => [
+                    EventType::EVENT_TYPE_INSTALL => 5,
+                    EventType::EVENT_TYPE_REGISTRATION => 5,
+                ],
+                // publisherId => 2
+                2 => [
+                    EventType::EVENT_TYPE_APP_OPEN => 5,
+                ],
+            ],
+            // campaignId => 2
+            2 => [
+                // publisherId => 2
+                2 => [
+                    EventType::EVENT_TYPE_REGISTRATION => 5,
+                ],
+            ],
+        ];
     }
 }
